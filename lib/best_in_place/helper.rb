@@ -21,7 +21,12 @@ module BestInPlace
       value = nil
       if opts[:type] == :select && !opts[:collection].blank?
         value = real_object.send(field)
-        display_value = Hash[opts[:collection]].stringify_keys[value.to_s]
+        collection_index = Hash[opts[:collection]].stringify_keys
+        if !value.respond_to?('each')
+          display_value = collection_index[value.to_s]
+        else
+          display_value = value.map{|v| collection_index[v.to_s]}.compact.to_sentence(last_word_connector: ", or ")
+        end
         collection = opts[:collection].to_json
       end
       if opts[:type] == :checkbox
@@ -57,6 +62,8 @@ module BestInPlace
       out << " data-html-attrs='#{opts[:html_attrs].to_json}'" unless opts[:html_attrs].blank?
       out << " data-original-content='#{attribute_escape(real_object.send(field))}'" if opts[:display_as] || opts[:display_with]
       out << " data-value='#{attribute_escape(value)}'" if value
+      out << " data-multiselect='1'" if opts[:multiselect]
+      out << " data-grouped-collection='1'" if opts[:grouped_collection]
 
       if opts[:data] && opts[:data].is_a?(Hash)
         opts[:data].each do |k, v|
